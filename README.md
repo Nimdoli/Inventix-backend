@@ -11,8 +11,9 @@ purchase orders) and verifies the Supabase-issued JWT on every request.
 2. **Run the schema**: open the SQL Editor in your Supabase project and run
    `migrations/001_initial_schema.sql`.
 3. **Copy `.env.example` to `.env`** and fill in your real values from:
-   - Settings → Database → Connection string (`DATABASE_URL`)
-   - Settings → API → Project URL (`SUPABASE_URL`) and JWT Secret (`SUPABASE_JWT_SECRET`)
+   - The **Connect** button (top of the project dashboard) → **Direct** tab → connection string (`DATABASE_URL`). Percent-encode any special characters in your password (`@` → `%40`, `#` → `%23`, etc.) or SQLAlchemy won't parse it.
+   - Settings → API Keys → Project URL (`SUPABASE_URL`)
+   - No JWT secret needed — this project uses Supabase's newer asymmetric JWT Signing Keys, so tokens are verified against Supabase's public JWKS endpoint automatically.
 4. **Install dependencies** (Python 3.11+ recommended):
    ```bash
    python -m venv venv
