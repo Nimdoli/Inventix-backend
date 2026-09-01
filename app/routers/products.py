@@ -11,6 +11,16 @@ from app.schemas.product import ProductCreate, ProductUpdate, ProductOut
 
 router = APIRouter(prefix="/product", tags=["products"])
 
+LOW_STOCK_THRESHOLD = 10
+
+
+def compute_status(stock: int) -> str:
+    if stock <= 0:
+        return "out_of_stock"
+    if stock <= LOW_STOCK_THRESHOLD:
+        return "low_stock"
+    return "in_stock"
+
 
 @router.get("", response_model=list[ProductOut])
 def list_products(
@@ -47,7 +57,11 @@ def create_product(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    product = Product(**payload.model_dump(), owner_id=user["sub"])
+    product = Product(
+        **payload.model_dump(),
+        status=compute_status(payload.stock),
+        owner_id=user["sub"],
+    )
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -64,8 +78,11 @@ def update_product(
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    for field, value in updates.items():
         setattr(product, field, value)
+    if "stock" in updates:
+        product.status = compute_status(product.stock)
     db.commit()
     db.refresh(product)
     return product
